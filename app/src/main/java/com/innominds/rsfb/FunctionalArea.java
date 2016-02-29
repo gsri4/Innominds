@@ -201,6 +201,8 @@ public class FunctionalArea extends AppCompatActivity  {
 
     }
 
+
+    //Clicked on on back pressed then app will exit
     @Override
     public void onBackPressed() {
         super.onBackPressed();
