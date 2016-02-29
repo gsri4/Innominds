@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">ERRS(Enterprise Records Retention Schedule)</string>
+    <string name="action_settings">Settings</string>
+    <string name="str_lookup">Lookup Retention</string>
+    <string name="str_btn_submit">Submit</string>
+    <string name="str_btn_reset">Reset</string>
+    <string name="str_btn_close">Close</string>
+    <string name="str_btn_another">Lookup Another</string>
+    <string name="str_funArea">Functional Area</string>
+    <string name="str_business_info">Business Doc Type</string>
+    <string name="str_schedule">Retention Schedule :</string>
+    <string name="str_category">Record Category Code :</string>
+    <string name="str_vital">Vital Record :</string>
+    <string name="str_value">Value</string>
+    <string name="str_info">Please select your Functional Area and Business Document Type</string>
+    <string name="str_info_errs">Enterprise Record Retention Schedule (ERRS)</string>
+</resources>
