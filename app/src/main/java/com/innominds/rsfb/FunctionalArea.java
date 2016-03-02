@@ -5,11 +5,14 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.activeandroid.query.Select;
@@ -26,7 +29,7 @@ public class FunctionalArea extends AppCompatActivity  {
 
 
 
-    private Spinner mFunctionalSpinner,mBusinessAreaSpinner;
+    private AutoCompleteTextView mFunctionalAutoView,mBusinessAreaAutoView;
     private Button mBtn_Reset, mBtn_Submit;
     List<String> functionalAreas = new ArrayList<String>();
     List<String> functionalBusinessType = new ArrayList<String>();
@@ -35,19 +38,18 @@ public class FunctionalArea extends AppCompatActivity  {
     SharedPreferences.Editor editor;
     public static  final String PREFS_NAME = "Spinner Values";
     public static  final String PREFS_FAREA = "Functional Area";
-    public static  final String PREFS_FAREA_Index = "Functional Area Index";
     public static  final String PREFS_BTYPE = "Business Type";
-    public static  final String PREFS_BTYPE_Index = "Business Type Index";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_functional_area);
 
-        mFunctionalSpinner = (Spinner)findViewById(R.id.spinner_funArea);
-        mBusinessAreaSpinner = (Spinner)findViewById(R.id.spinner_businessCode);
+        mFunctionalAutoView = (AutoCompleteTextView)findViewById(R.id.fun_txtview);
+        mBusinessAreaAutoView = (AutoCompleteTextView)findViewById(R.id.btype_txtview);
         mBtn_Submit = (Button)findViewById(R.id.btn_submit);
         mBtn_Reset = (Button)findViewById(R.id.btn_reset);
+
 
 
 
@@ -66,98 +68,145 @@ public class FunctionalArea extends AppCompatActivity  {
         functionalAreas.addAll(hs);
         Collections.sort(functionalAreas, String.CASE_INSENSITIVE_ORDER);
 
-        //Adding default element
-        functionalAreas.add(0,"Functional Area");
+        //Adding default element to Functional Area autocomplete view
+         setFunctionalAreaData(functionalAreas);
 
 
-        //Setting spinner items with functional area
-        ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, functionalAreas);
-        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mFunctionalSpinner.setAdapter(dataAdapter);
 
-        //Addind default element
-        functionalBusinessType.add(0, "Business Document Type");
+
+        //Adding default element Business Type
         setBusinessCodeData(functionalBusinessType);
 
 
 
+        //Checking weather elements are empty or matches with any of stings.
         mBtn_Submit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                if((!(mFunctionalSpinner.getSelectedItem().toString().equals("Functional Area")))&& mBusinessAreaSpinner.getSelectedItem() != null && mBusinessAreaSpinner != null){
-                    if(!(mBusinessAreaSpinner.getSelectedItem().toString().equals("No Business Type available")))
-                    {
+                if (!(mFunctionalAutoView.getText().toString().isEmpty()) && !(mBusinessAreaAutoView.getText().toString().isEmpty()) &&
+                        (!(mFunctionalAutoView.getText().toString().equals("Functional Area"))) && !(mBusinessAreaAutoView.getText().toString().equals("Business Document Type"))) {
+                    if (!(mBusinessAreaAutoView.getText().toString().equals("No Business Type available"))) {
                         settings = getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
                         editor = settings.edit(); //2
 
-                        editor.putString(PREFS_FAREA, mFunctionalSpinner.getSelectedItem().toString());
-                        editor.putInt(PREFS_FAREA_Index, mFunctionalSpinner.getSelectedItemPosition());
-                        editor.putString(PREFS_BTYPE, mBusinessAreaSpinner.getSelectedItem().toString());
-                        editor.putInt(PREFS_BTYPE_Index, mBusinessAreaSpinner.getSelectedItemPosition());
+                        editor.putString(PREFS_FAREA, mFunctionalAutoView.getText().toString());
+                        editor.putString(PREFS_BTYPE, mBusinessAreaAutoView.getText().toString());
                         editor.commit();
 
                         Intent codeResultsIntent = new Intent(FunctionalArea.this, FunctionalCodeResults.class);
                         startActivity(codeResultsIntent);
-                    }else{
-                        Toast.makeText(FunctionalArea.this,"Not able to request data without Business Type ",Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(FunctionalArea.this, "Not able to request data without Business Type ", Toast.LENGTH_SHORT).show();
                     }
-                }else{
-                    Toast.makeText(FunctionalArea.this,"Please select Functional Area and Business Type to continue",Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(FunctionalArea.this, "Please select Functional Area and Business Type to continue", Toast.LENGTH_SHORT).show();
                 }
 
             }
         });
 
 
+
+        //When ever user selected particular item in mFunctionalAutoView then we dismiss keyboard and shows default hints
+        mFunctionalAutoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                //Get selected item from spinner
+                hideSoftKeyBoard();
+                selectedItem = mFunctionalAutoView.getText().toString();
+                functionalBusinessType.clear();
+                setCategoryCodeSpinnerData(selectedItem);
+                mBusinessAreaAutoView.getText().clear();
+                mBusinessAreaAutoView.setHint(getResources().getString(R.string.str_buss_doctype));
+                mBusinessAreaAutoView.requestFocus();
+
+            }
+        });
+
+
+
+
+
+        //Hiding keyboard when mBusinessAreaAutoView item selected
+        mBusinessAreaAutoView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                hideSoftKeyBoard();
+            }
+        });
+
+
+        //Text changed in mFunctionalAutoView area then we again set the adapter data
+        mFunctionalAutoView.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                selectedItem = mFunctionalAutoView.getText().toString();
+                functionalBusinessType.clear();
+                setCategoryCodeSpinnerData(selectedItem);
+
+            }
+        });
+
+
+
+        //When mFunctionalAutoView clicked then it shows dropdown with adapter data
+        mFunctionalAutoView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mFunctionalAutoView.showDropDown();
+            }
+        });
+
+
+        //When mBusinessAreaAutoView clicked then it shows dropdown with adapter data
+        mBusinessAreaAutoView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mBusinessAreaAutoView.showDropDown();
+            }
+        });
+
+
+
+        //Reset both the autocomplete views data
         mBtn_Reset.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                mFunctionalSpinner.setSelection(0);
-                functionalBusinessType.add(0,"Business Document Type");
-                setBusinessCodeData(functionalBusinessType);
-
+                mFunctionalAutoView.setText(" ");
+                mFunctionalAutoView.getText().clear();
+                mFunctionalAutoView.setHint(getResources().getString(R.string.str_funArea));
+                setFunctionalAreaData(functionalAreas);
+                mFunctionalAutoView.setSelection(0);
+                mBusinessAreaAutoView.setText(" ");
+                mBusinessAreaAutoView.getText().clear();
+                mBusinessAreaAutoView.setHint(getResources().getString(R.string.str_buss_doctype));
+                mFunctionalAutoView.requestFocus();
             }
         });
 
-        mFunctionalSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-                if (position != 0){
-                    //Get selected item from spinner
-                    selectedItem = mFunctionalSpinner.getSelectedItem().toString();
-                    functionalBusinessType.clear();
-                    setCategoryCodeSpinnerData(selectedItem);
-                 }else{
-                    functionalBusinessType.clear();
-                    functionalBusinessType.add(0,"Business Document Type");
-                    setBusinessCodeData(functionalBusinessType);
-
-                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-
-
-        mBusinessAreaSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
     }
 
+
+    //Check and dismiss soft keyboard
+    private void hideSoftKeyBoard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+
+        if(imm.isAcceptingText()) { // verify if the soft keyboard is open
+            imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        }
+    }
 
 
 
@@ -197,7 +246,16 @@ public class FunctionalArea extends AppCompatActivity  {
         //Setting spinner items with functional area
         ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, codes);
         dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mBusinessAreaSpinner.setAdapter(dataAdapter);
+        mBusinessAreaAutoView.setAdapter(dataAdapter);
+
+    }
+
+    //used to set the spinner value of Functional Area
+    private void setFunctionalAreaData( List<String> functionalAreas){
+        //Setting spinner items with functional area
+        ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, functionalAreas);
+        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mFunctionalAutoView.setAdapter(dataAdapter);
 
     }
 
