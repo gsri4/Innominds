@@ -10,12 +10,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.activeandroid.query.Select;
 import com.innominds.rsfb.model.CategoryCodes;
 import com.innominds.rsfb.model.FunctionalRecords;
 
-public class FunctionalCodeResults extends AppCompatActivity {
+public class  FunctionalCodeResults extends AppCompatActivity {
 
 
     private TextView txtFunctionalArea, txtBusinessType, txtRetentionSchedule_value,
@@ -55,14 +56,24 @@ public class FunctionalCodeResults extends AppCompatActivity {
         CategoryCodes categoryCodes = new Select().from(CategoryCodes.class).where("categorydoctype = ?", strBusinessDocType).executeSingle();
 
 
-        //Check wather category was empty and query to get the value of vital and retentation
-        if(!(categoryCodes.getmCategoryCode().isEmpty())) {
-            txtCategory_Value.setText(categoryCodes.getmCategoryCode());
-            FunctionalRecords selectedRecord = new Select().from(FunctionalRecords.class).where("categorycode = ?", categoryCodes.getmCategoryCode()).executeSingle();
-            txtVital_value.setText(selectedRecord.getmRecVital());
-            txtRetentionSchedule_value.setText(selectedRecord.getmRecValue());
+        //Handling exceptions when category data returns null
+        try {
+            //Check wather category was empty and query to get the value of vital and retentation
+            if (!(categoryCodes.getmCategoryCode().isEmpty()) && categoryCodes != null) {
+                txtCategory_Value.setText(categoryCodes.getmCategoryCode());
+                FunctionalRecords selectedRecord = new Select().from(FunctionalRecords.class).where("categorycode = ?", categoryCodes.getmCategoryCode()).executeSingle();
+                txtVital_value.setText(selectedRecord.getmRecVital());
+                txtRetentionSchedule_value.setText(selectedRecord.getmRecValue());
+            } else {
+                Toast.makeText(getApplicationContext(), "Entered incorrect Data", Toast.LENGTH_SHORT).show();
+            }
+        }catch (NullPointerException e){
+            e.printStackTrace();
+            Toast.makeText(FunctionalCodeResults.this, "Entered incorrect Data", Toast.LENGTH_SHORT).show();
         }
 
+
+        //Finishing present activity and showing FunctionalCodeResults activity
         btn_LookupAnother.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -75,7 +86,7 @@ public class FunctionalCodeResults extends AppCompatActivity {
         });
 
 
-
+        //Finishing present activity and showing Main activity
         btn_Close.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -91,6 +102,8 @@ public class FunctionalCodeResults extends AppCompatActivity {
 
     }
 
+
+    //Clicking on back button on action bar will  kills current activity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
@@ -100,4 +113,6 @@ public class FunctionalCodeResults extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
+
 }
